@@ -1,55 +1,108 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
     {% load static %}
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-</head>
-<body>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Exam Results - {{ course.name }}</title>
 
- <nav class="navbar navbar-light bg-light">
-    <div class="container-fluid">
-        <div class="navbar-header">
-              <a class="navbar-brand" href="{% url 'onlinecourse:index' %}">Home</a>
-        </div>
-        <ul class="nav navbar-nav navbar-right">
-            {% if user.is_authenticated %}
-            <li>
-                <a class="btn btn-link" href="#">{{ user.first_name }}({{ user.username }})</a>
-                <a class="btn btn-link" href="{% url 'onlinecourse:logout' %}">Logout</a>
-            </li>
-            {% else %}
-            <li>
-                <form class="form-inline" action="{% url 'onlinecourse:login' %}" method="post">
-                    {% csrf_token %}
-                    <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Username" name="username" >
-                        <input type="password" class="form-control" placeholder="Username" name="psw" >
-                        <button class="btn btn-primary" type="submit">Login</button>
-                        <a class="btn btn-link" href="{% url 'onlinecourse:registration' %}">Sign Up</a>
-                    </div>
-                </form>
-            </li>
-            {% endif %}
-        </ul>
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<body>
+<nav class="navbar navbar-light bg-light">
+    <a class="navbar-brand" href="{% url 'onlinecourse:index' %}">Home</a>
+
+    <div>
+        {% if user.is_authenticated %}
+            <span class="mr-3">
+                {{ user.first_name }} ({{ user.username }})
+            </span>
+            <a class="btn btn-link" href="{% url 'onlinecourse:logout' %}">
+                Logout
+            </a>
+        {% endif %}
     </div>
 </nav>
 
-<div class="container-fluid">
+<div class="container mt-4 mb-5">
+    <h2>{{ course.name }} — Exam Results</h2>
+
     {% if grade > 80 %}
-    <div class="alert alert-success">
-       <!--HINT Display passed info -->
-    </div>
-        {% else %}
+        <div class="alert alert-success">
+            <h4>Congratulations! You passed the exam.</h4>
+            <p class="mb-0">
+                Your score is {{ grade }}%.
+                You earned {{ total_score }} out of {{ total_points }} points.
+            </p>
+        </div>
+    {% else %}
         <div class="alert alert-danger">
-            <!--HINT Display failed info -->
+            <h4>Keep practicing!</h4>
+            <p class="mb-0">
+                You did not pass this time. Your score is {{ grade }}%.
+                You earned {{ total_score }} out of {{ total_points }} points.
+                Review the answers and try again.
+            </p>
         </div>
-        <a class="btn btn-link text-danger" href="{% url 'onlinecourse:course_details' course.id %}">Re-test</a>
-        {% endif %}
-        <div class="card-columns-vertical mt-1">
-        <h5 class="">Exam results</h5>
-            <!--HINT Display exam results-->
+        <a class="btn btn-primary mb-3"
+           href="{% url 'onlinecourse:course_details' course.id %}">
+            Retake Exam
+        </a>
+    {% endif %}
+
+    <h4 class="mt-3">Detailed Results</h4>
+
+    {% for result in question_results %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <strong>
+                    Question {{ forloop.counter }}:
+                    {{ result.question.content }}
+                </strong>
+                <span class="float-right">
+                    {{ result.question.grade }} points
+                </span>
+            </div>
+
+            <div class="card-body">
+                {% if result.is_correct %}
+                    <p class="text-success font-weight-bold">
+                        Correct answer
+                    </p>
+                {% else %}
+                    <p class="text-danger font-weight-bold">
+                        Incorrect answer
+                    </p>
+                {% endif %}
+
+                {% for choice in result.choices %}
+                    <div class="mb-2">
+                        {% if choice.is_correct %}
+                            <span class="text-success font-weight-bold">
+                                ✓ {{ choice.content }} — Correct answer
+                            </span>
+                        {% elif choice in result.selected_choices %}
+                            <span class="text-danger">
+                                ✗ {{ choice.content }} — Your selection
+                            </span>
+                        {% else %}
+                            <span>{{ choice.content }}</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
         </div>
-    </div>
+    {% empty %}
+        <p>No questions were found for this assessment.</p>
+    {% endfor %}
+
+    <a class="btn btn-secondary"
+       href="{% url 'onlinecourse:course_details' course.id %}">
+        Back to Course
+    </a>
+</div>
 </body>
 </html>
